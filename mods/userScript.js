@@ -22,7 +22,7 @@
    * ===================================================================== */
 
   // Must match "websiteURL" in package.json
-  var HOME_URL = 'https://YOUR-GITHUB-NAME.github.io/niksnaks-browser/';
+  var HOME_URL = 'https://niksnaks3.github.io/Tizenbrowser/';
 
   var KEY = {
     LEFT: 37, UP: 38, RIGHT: 39, DOWN: 40, ENTER: 13,
