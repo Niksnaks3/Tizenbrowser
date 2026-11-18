@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Niksnaks-browser
 // @namespace    niksnaks
-// @version      0.1.4
+// @version      0.1.5
 // @description  Ad blocking, TV remote navigation and dark mode. Injected by TizenBrew on every page.
 // @match        *://*/*
 // @run-at       document-start
@@ -23,6 +23,7 @@
 
   // Must match "websiteURL" in package.json
   var HOME_URL = 'https://niksnaks3.github.io/Tizenbrowser/';
+  var VERSION = '0.1.5';  // set by tools/release.py
 
   var KEY = {
     LEFT: 37, UP: 38, RIGHT: 39, DOWN: 40, ENTER: 13,
@@ -730,7 +731,7 @@
     ];
     var count = el('span', { 'class': 'nk-count' }, [icon('shield'), blockedCount + ' blocked']);
     var root = el('div', { id: 'nk-bar', 'data-niksnaks': '' },
-      [el('span', { 'class': 'nk-brand' }, [icon('tree'), 'Niksnaks'])].concat(buttons, [count]));
+      [el('span', { 'class': 'nk-brand' }, [icon('tree'), 'Niksnaks ' + VERSION])].concat(buttons, [count]));
 
     buttons.forEach(function (b) {
       b.addEventListener('click', function (e) {

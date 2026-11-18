@@ -6,16 +6,18 @@ a mini toolbar and automatic dark mode.
 
 ```
 Tizenbrowser/
-├── package.json         TizenBrew module info ("main" points into dist/)
-├── tools/release.py     makes a release: py tools/release.py 0.1.5
-├── dist/                versioned copies of the script that TizenBrew loads
+├── package.json         TizenBrew module info ("main" = dist/niksnaks-loader.js)
+├── tools/release.py     makes a release: py tools/release.py 0.1.6
+├── dist/
+│   └── niksnaks-loader.js  loader + fallback copy (what TizenBrew loads)
 ├── docs/                the homepage (GitHub Pages serves this folder)
 │   ├── index.html
 │   ├── style.css
 │   ├── app.js
-│   └── logo.svg
+│   ├── logo.svg
+│   └── niksnaks.js      live script the loader fetches (built by release.py)
 └── mods/
-    └── userScript.js    injected into every page
+    └── userScript.js    source of the script (edit this one)
 ```
 
 ## Remote keys
@@ -49,10 +51,17 @@ Green is left alone: TizenBrew uses it for the module manager.
 2. **Put the homepage online.** In the GitHub repo go to *Settings → Pages → Build and
    deployment → Deploy from a branch → `main` / `/docs`*. After a minute it's live.
 3. **Install on the TV.** Open TizenBrew, press **Green** for the module manager, choose to add
-   a **GitHub** module, type `Niksnaks3/Tizenbrowser@main`, then start Niksnaks-browser.
-   (Use `@main`: the plain name is a separate jsDelivr cache entry that can stay stale for 12 hours.)
-   No npm needed: TizenBrew loads GitHub modules through jsDelivr
-   (`https://cdn.jsdelivr.net/gh/Niksnaks3/Tizenbrowser@main/...`).
+   a **GitHub** module and type the pinned name `Niksnaks3/Tizenbrowser@<commit>` (the commit
+   that introduced the loader; see "How updates work" below). Then start Niksnaks-browser.
+
+### How updates work
+
+TizenBrew loads `dist/niksnaks-loader.js` from jsDelivr, pinned to one commit, so it can never
+be served stale. On every page the loader fetches the newest script from GitHub Pages
+(`docs/niksnaks.js`) and runs it; if that fails it runs its built-in copy. The toolbar shows
+the version that is running (e.g. "Niksnaks 0.1.5").
+
+You only need to re-add the module (with a newer commit) if the loader itself changes.
 
 ## 2. The key test (do this first)
 
@@ -74,14 +83,10 @@ side looks it up by full `gh/...` name).
 ## 3. Updating
 
 - **Homepage only** (`docs/`): commit and push. GitHub Pages updates in a minute or so.
-- **Script** (`mods/`): edit `mods/userScript.js`, then run `py tools/release.py <new version>`
-  (e.g. `0.1.5`). That copies the script to `dist/niksnaks-<version>.js` and points
-  `package.json` at it. A brand-new filename is never stale in jsDelivr's cache, so only
-  `package.json` has to be refreshed. Commit and push, **wait about a minute**, then open once:
-  - https://purge.jsdelivr.net/gh/Niksnaks3/Tizenbrowser@main/package.json
-
-  Then restart the TV (hold the power button ~5 s): TizenBrew's background service keeps the
-  script in memory even when the app is closed.
+- **Script** (`mods/`): edit `mods/userScript.js`, run `py tools/release.py <new version>`
+  (e.g. `0.1.6`), commit and push. GitHub Pages serves the new script within a minute or two,
+  and the TV uses it on the next page it opens (allow up to ~5 minutes for caches).
+  No purging, no TV restart.
 - Don't create GitHub releases or tags: jsDelivr would then serve the newest tag instead of
   `main`.
 
