@@ -7,8 +7,9 @@
 
   var KEY = {
     LEFT: 37, UP: 38, RIGHT: 39, DOWN: 40, ENTER: 13,
-    BACK: 10009, ESC: 27,
-    IME_DONE: 65376, IME_CANCEL: 65385
+    BACK: 10009, ESC: 27, SPACE: 32,
+    IME_DONE: 65376, IME_CANCEL: 65385,
+    L: 76, F6: 117
   };
 
   var stage = document.getElementById('stage');
@@ -110,10 +111,24 @@
   form.addEventListener('click', function () {
     if (!editing) startEditing();
   });
+  // Keyboard Tab onto a tile
+  tiles.forEach(function (t, i) {
+    t.addEventListener('focus', function () {
+      if (row !== 1 || col !== i) select(1, i);
+    });
+  });
 
   /* ---------- Remote keys ---------- */
   document.addEventListener('keydown', function (e) {
     var k = e.keyCode;
+
+    // Ctrl+L / F6: jump to the search bar (like a browser address bar)
+    if (k === KEY.F6 || (e.ctrlKey && k === KEY.L)) {
+      e.preventDefault();
+      if (!editing) { select(0, 0); startEditing(); }
+      input.select();
+      return;
+    }
 
     if (editing) {
       if (k === KEY.ENTER || k === KEY.IME_DONE) {
@@ -148,11 +163,21 @@
         if (row === 0) select(1, lastTileCol);
         break;
       case KEY.ENTER:
+      case KEY.SPACE:
         e.preventDefault();
         if (row === 0) startEditing();
         else location.href = current().href;
         break;
       // BACK on the homepage is left alone, so TizenBrew handles it.
+      default:
+        // Keyboard: just start typing to search
+        if (e.key && e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+          e.preventDefault();
+          select(0, 0);
+          startEditing();
+          input.value = e.key;
+          try { input.setSelectionRange(1, 1); } catch (x) {}
+        }
     }
   });
 
@@ -217,4 +242,11 @@
     if (saved.length === 2) start = [Math.min(+saved[0], 1) || 0, +saved[1] || 0];
   } catch (e) {}
   select(start[0], start[1]);
+
+  // Ctrl+L on another site sends you here with #search
+  if (location.hash === '#search') {
+    select(0, 0);
+    startEditing();
+    try { history.replaceState(null, '', location.pathname); } catch (e) {}
+  }
 })();

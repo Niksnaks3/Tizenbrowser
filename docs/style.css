@@ -282,6 +282,17 @@ body {
   margin-right: 12px;
   border-radius: 6px;
 }
+.kbd {
+  display: inline-block;
+  margin-left: 12px;
+  padding: 1px 8px;
+  border: 2px solid var(--line);
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 17px;
+  font-style: normal;
+  font-weight: 700;
+}
 .key-red { background: #E5484D; }
 .key-yellow { background: #F2C94C; }
 .key-blue { background: #4C8DF6; }

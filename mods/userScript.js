@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Niksnaks-browser
 // @namespace    niksnaks
-// @version      0.1.1
+// @version      0.1.2
 // @description  Ad blocking, TV remote navigation and dark mode. Injected by TizenBrew on every page.
 // @match        *://*/*
 // @run-at       document-start
@@ -28,7 +28,10 @@
     LEFT: 37, UP: 38, RIGHT: 39, DOWN: 40, ENTER: 13,
     BACK: 10009, ESC: 27, BACKSPACE: 8,
     RED: 403, GREEN: 404, YELLOW: 405, BLUE: 406,
-    IME_DONE: 65376, IME_CANCEL: 65385
+    IME_DONE: 65376, IME_CANCEL: 65385,
+    // Keyboard
+    TAB: 9, HOME: 36, L: 76, R: 82, F1: 112, F2: 113, F3: 114, F5: 116, F6: 117,
+    BROWSER_BACK: 166, BROWSER_FORWARD: 167, BROWSER_REFRESH: 168, BROWSER_HOME: 172
   };
 
   // Ad, pop-under and tracker domains. Subdomains are matched too
@@ -717,6 +720,9 @@
       });
     });
 
+    root.addEventListener('mouseenter', function () { clearTimeout(barHideTimer); });
+    root.addEventListener('mouseleave', function () { if (!barOpen) peekBar(1200); });
+
     document.documentElement.appendChild(root);
     bar = { root: root, buttons: buttons, count: count, dark: buttons[3] };
     bar.count.lastChild.textContent = blockedCount + ' blocked';
@@ -896,7 +902,11 @@
     var cur = focused && document.contains(focused) ? focused.getBoundingClientRect() : null;
     if (cur && !inView(cur)) cur = null;
 
-    // Nothing selected yet: start with the first item on screen
+    // Nothing selected yet: start from what the mouse is on, else the first item on screen
+    if (!cur && hoverEl && document.contains(hoverEl) && inView(hoverEl.getBoundingClientRect())) {
+      focusEl(hoverEl);
+      return;
+    }
     if (!cur) {
       var onScreen = list.filter(function (c) { return inView(c.r) && !covered(c.el, c.r); });
       onScreen.sort(function (a, b) {
@@ -1039,15 +1049,41 @@
   DIRS[KEY.UP] = 'up';
   DIRS[KEY.DOWN] = 'down';
 
+  // Remote colour keys plus keyboard equivalents
+  function shortcut(e) {
+    var k = e.keyCode;
+    if (k === KEY.RED || k === KEY.F1 || k === KEY.BROWSER_HOME || (e.altKey && k === KEY.HOME)) return 'home';
+    if (k === KEY.YELLOW || k === KEY.F2) return 'bar';
+    if (k === KEY.BLUE || k === KEY.F3) return 'dark';
+    if (k === KEY.F5 || k === KEY.BROWSER_REFRESH || (e.ctrlKey && k === KEY.R)) return 'reload';
+    if (k === KEY.F6 || (e.ctrlKey && k === KEY.L)) return 'search';
+    if (k === KEY.BROWSER_BACK || (e.altKey && k === KEY.LEFT)) return 'back';
+    if (k === KEY.BROWSER_FORWARD || (e.altKey && k === KEY.RIGHT)) return 'forward';
+    return null;
+  }
+
+  function runShortcut(action) {
+    if (action === 'home') goHome();
+    else if (action === 'bar') { if (barOpen) closeBar(); else openBar(); }
+    else if (action === 'dark') toggleDark();
+    else if (action === 'reload') location.reload();
+    else if (action === 'search') location.href = HOME_URL + '#search';
+    else if (action === 'back') goBack();
+    else if (action === 'forward') history.forward();
+  }
+
   function onKey(e) {
     if (document.querySelector('meta[name="niksnaks-home"]')) return;  // homepage has its own
     var k = e.keyCode;
     var active = document.activeElement;
 
-    // Colour keys work everywhere
-    if (k === KEY.RED) { stop(e); if (IS_TOP) goHome(); else sendTop('home'); return; }
-    if (k === KEY.YELLOW) { stop(e); if (IS_TOP) { if (barOpen) closeBar(); else openBar(); } else sendTop('bar'); return; }
-    if (k === KEY.BLUE) { stop(e); if (IS_TOP) toggleDark(); else sendTop('dark'); return; }
+    // Colour keys and keyboard shortcuts work everywhere, even while typing
+    var action = shortcut(e);
+    if (action) {
+      stop(e);
+      if (IS_TOP) runShortcut(action); else sendTop(action);
+      return;
+    }
 
     // Typing in a text field
     if (isEditable(active)) {
@@ -1071,7 +1107,7 @@
     var video = findVideo();
     var fs = fullscreenEl();
     if (fs || (video && focused === video)) {
-      if (k === KEY.BACK || k === KEY.ESC) {
+      if (k === KEY.BACK || (k === KEY.ESC && fs)) {
         stop(e);
         if (fs) exitFullscreen(); else goBack();
         return;
@@ -1104,18 +1140,52 @@
       return;
     }
 
-    if (k === KEY.BACK || k === KEY.ESC || (k === KEY.BACKSPACE && !isEditable(active))) {
+    if (k === KEY.BACK || k === KEY.BACKSPACE) {
       stop(e);
       if (barOpen) closeBar();
       else goBack();
+    } else if (k === KEY.ESC && barOpen) {
+      stop(e);
+      closeBar();
     }
   }
 
   window.addEventListener('keydown', onKey, true);
 
-  // Mouse/pointer use: hide the ring so it doesn't lag behind
+  // Mouse: clicking hides the ring, but the arrows carry on from what you clicked or hovered.
+  // Moving the pointer to the top edge of the screen shows the toolbar.
+  var hoverEl = null;
+  var lastMouse = 0;
+
+  function navTarget(t) {
+    while (t && t.nodeType === 1) {
+      if (t.matches && t.matches(NAV_SELECTOR)) return t;
+      t = t.parentNode;
+    }
+    return null;
+  }
+
+  window.addEventListener('mouseover', function (e) { hoverEl = navTarget(e.target); }, true);
+  window.addEventListener('mousemove', function (e) {
+    lastMouse = Date.now();
+    if (e.clientY <= 6) peekBar(2500);
+  }, true);
   window.addEventListener('mousedown', function (e) {
-    if (ring && !(bar && bar.root.contains(e.target))) { focused = null; hideRing(); }
+    lastMouse = Date.now();
+    if (bar && bar.root.contains(e.target)) return;
+    focused = navTarget(e.target);
+    hideRing();
+  }, true);
+
+  // Keyboard Tab: let the green ring follow the browser's own focus
+  window.addEventListener('focusin', function (e) {
+    var t = e.target;
+    if (!t || t.nodeType !== 1 || t === focused || t === document.body) return;
+    if (bar && bar.root.contains(t)) return;
+    if (Date.now() - lastMouse < 400) return;  // came from a click, not Tab
+    ensureRing();
+    focused = t;
+    placeRing();
   }, true);
 
   /* =====================================================================
@@ -1129,11 +1199,12 @@
   if (IS_TOP) {
     window.addEventListener('message', function (e) {
       var cmd = e.data && e.data.niksnaks;
-      if (!cmd || e.source === window) return;
-      if (cmd === 'home') goHome();
-      else if (cmd === 'dark') toggleDark();
-      else if (cmd === 'bar') { if (barOpen) closeBar(); else openBar(); }
-      else if (cmd === 'leave') {
+      if (typeof cmd !== 'string' || e.source === window) return;
+      // Keys only reach the frame that has focus, so ignore messages from any other frame
+      var act = document.activeElement;
+      if (!act || act.tagName !== 'IFRAME' || act.contentWindow !== e.source) return;
+      if (cmd !== 'leave') runShortcut(cmd);
+      else {
         // Find the iframe that sent it and put the focus ring back on it
         var frames = document.querySelectorAll('iframe');
         for (var i = 0; i < frames.length; i++) {

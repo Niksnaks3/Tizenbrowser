@@ -18,15 +18,25 @@ Tizenbrowser/
 
 ## Remote keys
 
-| Key | Homepage | Any other site |
+Remote, keyboard and mouse all work at the same time.
+
+| Remote | Keyboard | What it does |
 |---|---|---|
-| Arrows | Move between search and tiles | Jump to the nearest link/button; scrolls when nothing is near |
-| OK | Type in search / open tile | Click the selected item |
-| BACK | (left to TizenBrew) | Close keyboard → exit fullscreen → previous page |
-| Red | | Go to the homepage |
-| Yellow | | Open/close the toolbar (Home, Back, Reload, Dark) |
-| Blue | | Dark mode on/off (remembered per site) |
+| Arrows | Arrows | Jump to the nearest link/button; scrolls when nothing is near |
+| | Tab / Shift+Tab | Normal browser focus; the green ring follows it |
+| OK | Enter (Space on the homepage) | Click the selected item |
+| BACK | Backspace, Alt+Left | Leave a text field, exit fullscreen, or go to the previous page |
+| | Alt+Right | Forward |
+| Red | F1, Alt+Home | Go to the homepage |
+| Yellow | F2 | Open/close the toolbar (Home, Back, Reload, Dark) |
+| Blue | F3 | Dark mode on/off (remembered per site) |
+| | F5, Ctrl+R | Reload |
+| | Ctrl+L, F6 | Homepage search bar (type a search or web address) |
+| | Esc | Close the toolbar / leave a text field (sites can use it too) |
 | Up at the top of a page | | Opens the toolbar |
+
+On the homepage you can just start typing to search. With a mouse: hover and click as
+usual, and move the pointer to the top edge of the screen to show the toolbar.
 
 Green is left alone: TizenBrew uses it for the module manager.
 

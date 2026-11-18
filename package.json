@@ -1,7 +1,7 @@
 {
   "name": "niksnaks-browser",
   "appName": "Niksnaks-browser",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "TV browser for TizenBrew: Niksnaks homepage, ad and pop-up blocking, remote navigation and dark mode.",
   "packageType": "mods",
   "websiteURL": "https://niksnaks3.github.io/Tizenbrowser/",
