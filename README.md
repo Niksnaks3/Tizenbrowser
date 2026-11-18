@@ -1,94 +1,112 @@
+<div align="center">
+
+<img src="docs/logo.svg" alt="Niksnaks-browser" width="120">
+
 # Niksnaks-browser
 
-A TizenBrew **mods** module for Samsung TVs. It opens the Niksnaks homepage and injects one
-script into every site that adds pop-up/ad/tracker blocking, remote-control navigation,
-a mini toolbar and automatic dark mode.
+**A simple TV browser for Samsung Tizen, made for the remote control.**
 
-```
-Tizenbrowser/
-├── package.json         TizenBrew module info (published to npm)
-├── docs/                the homepage (GitHub Pages serves this folder)
-│   ├── index.html
-│   ├── style.css
-│   ├── app.js
-│   └── logo.svg
-└── mods/
-    └── userScript.js    injected into every page
-```
+Homepage with tiles · Ad and pop-up blocking · Remote navigation · Automatic dark mode
+
+![Platform](https://img.shields.io/badge/platform-Samsung%20Tizen-1428a0)
+![TizenBrew](https://img.shields.io/badge/module-TizenBrew-orange)
+![License](https://img.shields.io/badge/license-MIT-green)
+
+</div>
+
+---
+
+## What is it?
+
+Niksnaks-browser is a [TizenBrew](https://github.com/reisxd/TizenBrew) module for Samsung TVs. It opens a clean homepage and adds one script to every site you visit, so websites work well with a TV remote and show fewer ads.
+
+## Features
+
+- **Homepage** with big tiles and a search bar, built for the remote
+- **Ad, pop-up and tracker blocking** with a list of known ad domains
+- **Overlay remover** that closes fake pop-ups and click-catching layers
+- **Remote navigation** that jumps to the nearest link or button
+- **Mini toolbar** with Home, Back, Reload and Dark mode
+- **Automatic dark mode**, remembered per site
+- **Per-site rules** for extra tweaks on sites that need them
 
 ## Remote keys
 
 | Key | Homepage | Any other site |
 |---|---|---|
-| Arrows | Move between search and tiles | Jump to the nearest link/button; scrolls when nothing is near |
+| Arrows | Move between search and tiles | Jump to the nearest link or button, scroll when nothing is near |
 | OK | Type in search / open tile | Click the selected item |
-| BACK | (left to TizenBrew) | Close keyboard → exit fullscreen → previous page |
+| BACK | Left to TizenBrew | Close keyboard, exit fullscreen, then go back |
 | Red | | Go to the homepage |
-| Yellow | | Open/close the toolbar (Home, Back, Reload, Dark) |
-| Blue | | Dark mode on/off (remembered per site) |
+| Yellow | | Open or close the toolbar |
+| Blue | | Dark mode on or off |
 | Up at the top of a page | | Opens the toolbar |
 
-Green is left alone: TizenBrew uses it for the module manager.
+Green is used by TizenBrew for its module manager.
 
-## 1. One-time setup
+## Install
 
-1. **Homepage address.** It lives at `https://niksnaks3.github.io/Tizenbrowser/`. If that ever
-   changes, update it in *both* `package.json` (`websiteURL`) and `mods/userScript.js` (`HOME_URL`).
-2. **Put the homepage online.** In the GitHub repo go to *Settings → Pages → Build and
-   deployment → Deploy from a branch → `main` / `/docs`*. After a minute it's live.
-3. **Publish the module.** Install Node.js LTS from nodejs.org, then in this folder:
-   ```
+1. Install [TizenBrew](https://github.com/reisxd/TizenBrew) on your Samsung TV.
+2. Open TizenBrew and press **Green** for the module manager.
+3. Add the package `niksnaks-browser`.
+4. Start it from the TizenBrew menu.
+
+## Project layout
+
+```
+Tizenbrowser/
+├── package.json        TizenBrew module info
+├── docs/               the homepage (served by GitHub Pages)
+│   ├── index.html
+│   ├── style.css
+│   ├── app.js
+│   └── logo.svg
+└── mods/
+    └── userScript.js   injected into every page
+```
+
+## Setup for developers
+
+1. **Homepage:** in the GitHub repo go to *Settings → Pages* and deploy from `main` and `/docs`. It will be live at `https://niksnaks3.github.io/Tizenbrowser/`.
+2. **Homepage address:** if it changes, update `websiteURL` in `package.json` and `HOME_URL` in `mods/userScript.js`.
+3. **Publish:** install Node.js, then run:
+
+   ```bash
    npm login
    npm publish
    ```
-   (`niksnaks-browser` was still free on npm on 18 Nov 2026.)
-4. **Install on the TV.** Open TizenBrew, press **Green** for the module manager, add the
-   package `niksnaks-browser`, and start it.
 
-## 2. The key test (do this first)
+4. **Update the script:** raise `version` in `package.json` and `@version` in `mods/userScript.js`, then publish again.
+5. **Update the homepage:** commit and push. GitHub Pages updates within a minute.
 
-Everything depends on the script being injected on *other* sites too, not just the homepage.
+### Check that it works
 
-1. Start Niksnaks-browser on the TV.
-2. Open any tile.
-3. The Niksnaks toolbar should slide down for about 4 seconds on that site.
-   - **Toolbar appears** → injection works everywhere. Continue.
-   - **No toolbar** → TizenBrew only injected into the homepage. Stop here and look into
-     this before tuning anything else.
-4. Press Yellow, then Red. You should land back on the homepage.
+Start the module on the TV and open any tile. The toolbar should slide down for about 4 seconds. If it does, the script is injected on every site. If not, TizenBrew only injected it into the homepage.
 
-## 3. Updating
+### Test on a PC
 
-- **Homepage only** (`docs/`): commit and push. GitHub Pages updates in a minute or so.
-- **Script** (`mods/`): bump `version` in `package.json` (and `@version` at the top of the
-  script), then `npm publish`. Restart the module on the TV.
+- **Homepage:** open `docs/index.html` in Chrome. Arrow keys, Enter and Escape work like the remote.
+- **Script:** add `mods/userScript.js` to the Tampermonkey extension. Use the toolbar with the mouse. Backspace works as BACK.
 
-## 4. Testing on a PC
+## Tuning
 
-- **Homepage:** open `docs/index.html` in Chrome. It scales to any window; arrow keys,
-  Enter and Escape work like the remote.
-- **Script:** install the Tampermonkey extension and add `mods/userScript.js` as a new
-  script (the header at the top is already set up). Red/Yellow/Blue only exist on the TV;
-  on a PC use the toolbar with the mouse. Backspace = BACK.
+Everything is in `mods/userScript.js`:
 
-## 5. Tuning (build step 6)
+| Setting | What it does |
+|---|---|
+| `AD_DOMAINS` | Ad, pop-under and tracker domains, subdomains included |
+| `SITE_RULES` | Per-site CSS, default dark mode, overlay remover on or off, never-block domains |
+| `AD_CSS_SELECTORS` | Ad containers hidden on every site |
 
-All in `mods/userScript.js`:
-
-- `AD_DOMAINS`: ad, pop-under and tracker domains (subdomains included).
-- `SITE_RULES`: per-site settings: extra CSS to hide things, default dark mode, turning the
-  overlay remover off, and domains to never block on that site.
-- `AD_CSS_SELECTORS`: generic ad containers hidden on every site.
-
-The browser console logs every blocked pop-up and removed overlay with a `[Niksnaks]`
-prefix, which is the easiest way to see what happened on a site.
+The browser console logs every blocked pop-up and removed overlay with a `[Niksnaks]` prefix.
 
 ## Known limits
 
-- Ads that load before the script runs can still download; the script hides them but can't
-  stop the request like a real ad blocker.
-- `<meta refresh>` redirects in the original HTML can't be cancelled. If one goes to a known
-  ad domain, the redirect guard bounces back from there.
-- Players inside cross-origin iframes only get remote navigation if TizenBrew also injects
-  into frames. BACK always returns from the player to the page if it does.
-- Streaming sites change their ad tricks often, so `AD_DOMAINS` needs updating now and then.
+- Ads that load before the script runs can still download. They are hidden, but the request is not stopped like a real ad blocker would.
+- `<meta refresh>` redirects in the original HTML cannot be cancelled.
+- Players inside cross-origin iframes only get remote navigation if TizenBrew injects into frames. BACK always returns from the player.
+- Streaming sites change their tricks often, so `AD_DOMAINS` needs updating now and then.
+
+## License
+
+[MIT](https://opensource.org/licenses/MIT)
