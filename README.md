@@ -47,9 +47,10 @@ Green is left alone: TizenBrew uses it for the module manager.
 2. **Put the homepage online.** In the GitHub repo go to *Settings → Pages → Build and
    deployment → Deploy from a branch → `main` / `/docs`*. After a minute it's live.
 3. **Install on the TV.** Open TizenBrew, press **Green** for the module manager, choose to add
-   a **GitHub** module, type `Niksnaks3/Tizenbrowser`, then start Niksnaks-browser.
+   a **GitHub** module, type `Niksnaks3/Tizenbrowser@main`, then start Niksnaks-browser.
+   (Use `@main`: the plain name is a separate jsDelivr cache entry that can stay stale for 12 hours.)
    No npm needed: TizenBrew loads GitHub modules through jsDelivr
-   (`https://cdn.jsdelivr.net/gh/Niksnaks3/Tizenbrowser/...`).
+   (`https://cdn.jsdelivr.net/gh/Niksnaks3/Tizenbrowser@main/...`).
 
 ## 2. The key test (do this first)
 
@@ -72,12 +73,14 @@ side looks it up by full `gh/...` name).
 
 - **Homepage only** (`docs/`): commit and push. GitHub Pages updates in a minute or so.
 - **Script** (`mods/`): bump `version` in `package.json` (and `@version` at the top of the
-  script), commit and push. jsDelivr caches GitHub files for up to 12 hours; to get the new
-  version right away, open these two links in a browser after pushing:
-  - https://purge.jsdelivr.net/gh/Niksnaks3/Tizenbrowser/package.json
-  - https://purge.jsdelivr.net/gh/Niksnaks3/Tizenbrowser/mods/userScript.js
+  script), commit and push. jsDelivr caches GitHub files for up to 12 hours. To get the new
+  version right away, **wait about a minute after pushing**, then open these two links once
+  (purging too early re-caches the old files, and purging repeatedly gets throttled):
+  - https://purge.jsdelivr.net/gh/Niksnaks3/Tizenbrowser@main/package.json
+  - https://purge.jsdelivr.net/gh/Niksnaks3/Tizenbrowser@main/mods/userScript.js
 
-  Then fully close and reopen TizenBrew on the TV (it also keeps the script in memory).
+  Then restart the TV (hold the power button ~5 s): TizenBrew's background service keeps the
+  script in memory even when the app is closed.
 - Don't create GitHub releases or tags: jsDelivr would then serve the newest tag instead of
   `main`.
 
