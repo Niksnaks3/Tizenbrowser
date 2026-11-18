@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Tells the injected Niksnaks script that this is the homepage (it then stays out of the way). -->
+  <meta name="niksnaks-home" content="1">
+  <title>Niksnaks</title>
+  <link rel="icon" href="logo.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Everything is laid out at 1920x1080 and scaled to fit the screen by app.js -->
+  <div id="stage">
+    <svg id="forest" viewBox="0 0 1920 260" preserveAspectRatio="none" aria-hidden="true"></svg>
+
+    <div class="clock">
+      <div class="clock-time" id="clock-time">--:--</div>
+      <div class="clock-date" id="clock-date"></div>
+    </div>
+
+    <main class="wrap">
+      <img class="logo" src="logo.svg" alt="Niksnaks">
+
+      <form class="search nav" id="search" autocomplete="off">
+        <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+        </svg>
+        <input id="q" type="text" placeholder="Search DuckDuckGo or type a web address"
+               spellcheck="false" autocapitalize="off" autocorrect="off" tabindex="-1">
+        <span class="search-hint" id="search-hint">OK to type</span>
+      </form>
+
+      <nav class="tiles">
+        <a class="tile nav" href="https://wmovies.nl/">
+          <span class="tile-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3Z"/>
+              <path d="m6.2 5.3 3.1 3.9"/><path d="m12.4 3.4 3.1 4"/>
+              <path d="M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>
+            </svg>
+          </span>
+          <span class="tile-go">OK &rsaquo;</span>
+          <span class="tile-name">wmovies</span>
+          <span class="tile-url">wmovies.nl</span>
+        </a>
+        <a class="tile nav" href="https://777-foodstore.com/">
+          <span class="tile-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
+              <path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>
+            </svg>
+          </span>
+          <span class="tile-go">OK &rsaquo;</span>
+          <span class="tile-name">777 Foodstore</span>
+          <span class="tile-url">777-foodstore.com</span>
+        </a>
+        <a class="tile nav" href="https://niksnaks.nl/">
+          <span class="tile-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m17 14 3 3.3a1 1 0 0 1-.7 1.7H4.7a1 1 0 0 1-.7-1.7L7 14h-.3a1 1 0 0 1-.7-1.7L9 9h-.2A1 1 0 0 1 8 7.3L12 3l4 4.3a1 1 0 0 1-.8 1.7H15l3 3.3a1 1 0 0 1-.7 1.7H17Z"/>
+              <path d="M12 22v-3"/>
+            </svg>
+          </span>
+          <span class="tile-go">OK &rsaquo;</span>
+          <span class="tile-name">Niksnaks</span>
+          <span class="tile-url">niksnaks.nl</span>
+        </a>
+      </nav>
+    </main>
+
+    <footer class="hints">
+      <span class="hint-label">On every site</span>
+      <span class="hint"><b class="key key-red"></b>Home</span>
+      <span class="hint"><b class="key key-yellow"></b>Toolbar</span>
+      <span class="hint"><b class="key key-blue"></b>Dark mode</span>
+      <span class="hint"><b class="key-text">BACK</b>Go back</span>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
