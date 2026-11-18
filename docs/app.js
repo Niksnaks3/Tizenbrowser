@@ -208,6 +208,32 @@
     cursorTimer = setTimeout(function () { cursor.style.opacity = '0'; }, 4000);
   });
 
+  /* ---------- Input test panel (temporary) ----------
+     Shows which mouse/keyboard events actually reach the page on the TV. */
+  var probe = document.createElement('div');
+  probe.id = 'probe';
+  document.getElementById('stage').appendChild(probe);
+  var counts = {};
+  var lastKey = '-';
+  var lastMouse = '-';
+  var EVENTS = ['mousemove', 'mousedown', 'click', 'pointermove', 'pointerdown', 'wheel', 'touchstart'];
+  function showProbe() {
+    var parts = EVENTS.map(function (n) { return n + ' ' + (counts[n] || 0); });
+    probe.textContent = 'Input test  |  key: ' + lastKey + '  |  mouse at: ' + lastMouse + '  |  ' + parts.join('  ');
+  }
+  EVENTS.forEach(function (n) {
+    window.addEventListener(n, function (e) {
+      counts[n] = (counts[n] || 0) + 1;
+      if (e.clientX !== undefined) lastMouse = Math.round(e.clientX) + ',' + Math.round(e.clientY);
+      showProbe();
+    }, true);
+  });
+  window.addEventListener('keydown', function (e) {
+    lastKey = e.keyCode + (e.key ? ' (' + e.key + ')' : '');
+    showProbe();
+  }, true);
+  showProbe();
+
   /* ---------- Clock ---------- */
   function pad(n) { return n < 10 ? '0' + n : '' + n; }
   function tick() {
