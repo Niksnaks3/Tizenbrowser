@@ -5,9 +5,20 @@
   "description": "TV browser for TizenBrew: Niksnaks homepage, ad and pop-up blocking, remote navigation and dark mode.",
   "packageType": "mods",
   "websiteURL": "https://niksnaks3.github.io/Tizenbrowser/",
-  "main": "mods/userScript.js",
-  "keys": ["ColorF0Red", "ColorF2Yellow", "ColorF3Blue"],
-  "files": ["mods/"],
-  "keywords": ["tizenbrew", "tizen", "browser", "adblock"],
+  "main": "dist/niksnaks-0.1.4.js",
+  "keys": [
+    "ColorF0Red",
+    "ColorF2Yellow",
+    "ColorF3Blue"
+  ],
+  "files": [
+    "dist/"
+  ],
+  "keywords": [
+    "tizenbrew",
+    "tizen",
+    "browser",
+    "adblock"
+  ],
   "license": "MIT"
 }

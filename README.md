@@ -6,7 +6,9 @@ a mini toolbar and automatic dark mode.
 
 ```
 Tizenbrowser/
-├── package.json         TizenBrew module info
+├── package.json         TizenBrew module info ("main" points into dist/)
+├── tools/release.py     makes a release: py tools/release.py 0.1.5
+├── dist/                versioned copies of the script that TizenBrew loads
 ├── docs/                the homepage (GitHub Pages serves this folder)
 │   ├── index.html
 │   ├── style.css
@@ -72,12 +74,11 @@ side looks it up by full `gh/...` name).
 ## 3. Updating
 
 - **Homepage only** (`docs/`): commit and push. GitHub Pages updates in a minute or so.
-- **Script** (`mods/`): bump `version` in `package.json` (and `@version` at the top of the
-  script), commit and push. jsDelivr caches GitHub files for up to 12 hours. To get the new
-  version right away, **wait about a minute after pushing**, then open these two links once
-  (purging too early re-caches the old files, and purging repeatedly gets throttled):
+- **Script** (`mods/`): edit `mods/userScript.js`, then run `py tools/release.py <new version>`
+  (e.g. `0.1.5`). That copies the script to `dist/niksnaks-<version>.js` and points
+  `package.json` at it. A brand-new filename is never stale in jsDelivr's cache, so only
+  `package.json` has to be refreshed. Commit and push, **wait about a minute**, then open once:
   - https://purge.jsdelivr.net/gh/Niksnaks3/Tizenbrowser@main/package.json
-  - https://purge.jsdelivr.net/gh/Niksnaks3/Tizenbrowser@main/mods/userScript.js
 
   Then restart the TV (hold the power button ~5 s): TizenBrew's background service keeps the
   script in memory even when the app is closed.
