@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Niksnaks-browser
 // @namespace    niksnaks
-// @version      0.1.0
+// @version      0.1.1
 // @description  Ad blocking, TV remote navigation and dark mode. Injected by TizenBrew on every page.
 // @match        *://*/*
 // @run-at       document-start

@@ -43,8 +43,12 @@ Green is left alone: TizenBrew uses it for the module manager.
 
 ## 2. The key test (do this first)
 
-Because `evaluateScriptOnDocumentStart` is set, TizenBrew injects the script into every page
-you open (it uses `Page.addScriptToEvaluateOnNewDocument`), so this should pass. Check it anyway:
+TizenBrew injects the script into every new page (on each `Runtime.executionContextCreated`),
+so this should pass. Check it anyway.
+
+Do **not** add `evaluateScriptOnDocumentStart` to `package.json`: in TizenBrew it stops GitHub
+mods modules from opening at all (the launch message uses the short module name, but the TV
+side looks it up by full `gh/...` name).
 
 1. Start Niksnaks-browser on the TV.
 2. Open any tile.
