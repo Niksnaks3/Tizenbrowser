@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Niksnaks-browser
 // @namespace    niksnaks
-// @version      0.1.3
+// @version      0.1.4
 // @description  Ad blocking, TV remote navigation and dark mode. Injected by TizenBrew on every page.
 // @match        *://*/*
 // @run-at       document-start
@@ -49,7 +49,7 @@
     'clickadu.com', 'mgid.com', 'adskeeper.co.uk', 'adskeeper.com', 'revcontent.com', 'zedo.com',
     'yllix.com', 'adspyglass.com', 'ad-maven.com', 'admaven.com', 'galaksion.com', 'clickaine.com',
     'bidvertiser.com', 'richads.com', 'evadav.com', 'notix.io', 'onesignal.com', 'pushengage.com',
-    'monetag.com', 'highperformanceformat.com', 'profitabledisplaynetwork.com', 'infolinks.com',
+    'monetag.com', 'llvpn.com', 'highperformanceformat.com', 'profitabledisplaynetwork.com', 'infolinks.com',
     'adf.ly', 'shorte.st', 'ouo.io', 'linkvertise.com', 'adblockanalytics.com',
     // Programmatic ad exchanges
     'adnxs.com', 'adsrvr.org', 'rubiconproject.com', 'pubmatic.com', 'openx.net', 'casalemedia.com',
@@ -77,8 +77,19 @@
   //   dark:  'auto' | 'on' | 'off'   default dark mode for the site
   //   sweep: false to turn off the overlay remover if it hides something you need
   //   allow: domains that must never be blocked on this site
+  //   focus: element the remote starts on when the page opens
+  //   clickable: extra elements the remote can select
+  //   then:  { 'clicked element': 'element to move to afterwards' }
   var SITE_RULES = {
-    'wmovies.nl': { css: '', dark: 'auto', sweep: true, allow: [] },
+    'wmovies.nl': {
+      css: '', dark: 'off', sweep: true, allow: [],
+      // Ring starts on the big play button, so OK plays straight away
+      focus: '#play',
+      // Buttons the site makes clickable with JavaScript only
+      clickable: '#play, #controls .item, .bookmark, .servers li, .seasons li, #episodes li a',
+      // After play / switching server, move into the video player
+      then: { '#play': '#iframe', '.servers li': '#iframe' }
+    },
     '777-foodstore.com': { css: '', dark: 'auto', sweep: true, allow: [] },
     'niksnaks.nl': { css: '', dark: 'auto', sweep: true, allow: [] },
     'duckduckgo.com': { css: '', dark: 'off', sweep: false, allow: [] }
@@ -443,6 +454,7 @@
       var added = mutations[i].addedNodes;
       for (var j = 0; j < added.length; j++) handleAddedNode(added[j]);
     }
+    pointerDirty = true;
     if (!sweepTimer) sweepTimer = setTimeout(function () { sweepTimer = null; sweepOverlays(); }, 400);
   });
   observer.observe(document, { childList: true, subtree: true });
@@ -808,12 +820,50 @@
     return !!e.isContentEditable;
   }
 
+  // Many sites make plain <div>s clickable with JavaScript (like the wmovies play
+  // button). They nearly always get cursor:pointer, so treat those as buttons too.
+  var NAV_CORE = 'a[href],button,[role="button"],[onclick]';
+  var pointerCache = [];
+  var pointerDirty = true;
+  var pointerTime = 0;
+
+  function pointerTargets() {
+    if (!pointerDirty && Date.now() - pointerTime < 3000) return pointerCache;
+    pointerDirty = false;
+    pointerTime = Date.now();
+    pointerCache = [];
+    if (!document.body) return pointerCache;
+    var els = document.body.getElementsByTagName('*');
+    if (els.length > 6000) return pointerCache;  // huge page: too slow on a TV
+    var memo = typeof WeakMap === 'function' ? new WeakMap() : null;
+    function isPointer(e) {
+      if (memo && memo.has(e)) return memo.get(e);
+      var p = getComputedStyle(e).cursor === 'pointer';
+      if (memo) memo.set(e, p);
+      return p;
+    }
+    for (var i = 0; i < els.length; i++) {
+      var e = els[i];
+      if (!isPointer(e)) continue;
+      var parent = e.parentElement;
+      if (parent && parent !== document.body && isPointer(parent)) continue;  // only the outer one
+      if (e.matches(NAV_SELECTOR)) continue;  // already a normal candidate
+      if ((e.closest && e.closest(NAV_CORE)) || e.querySelector(NAV_CORE)) continue;
+      pointerCache.push(e);
+    }
+    return pointerCache;
+  }
+
   function collect() {
     var vh = window.innerHeight;
-    var all = [].slice.call(document.querySelectorAll(NAV_SELECTOR));
+    var all = [].slice.call(document.querySelectorAll(NAV_SELECTOR)).concat(pointerTargets());
+    if (RULE.clickable) all = all.concat([].slice.call(document.querySelectorAll(RULE.clickable)));
+    var stamp = Date.now() + Math.random();
     var out = [];
     for (var i = 0; i < all.length; i++) {
       var e = all[i];
+      if (e.__nkSeen === stamp) continue;  // listed twice
+      e.__nkSeen = stamp;
       if (e.disabled || e.type === 'hidden') continue;
       if (bar && bar.root.contains(e)) continue;  // toolbar has its own mode
       var r = e.getBoundingClientRect();
@@ -1013,13 +1063,79 @@
       return true;
     }
     if (tag === 'IFRAME') {
-      try { e.focus(); e.contentWindow.focus(); } catch (x) {}
-      toast('In the player. Press BACK to leave');
+      enterFrame(e, true);
       return true;
     }
     navClick = true;
     try { e.click(); } finally { navClick = false; }
+    afterActivate(e);
     return true;
+  }
+
+  // Move the remote into a player iframe. press = also press its play button.
+  function enterFrame(f, press) {
+    try { f.focus(); f.contentWindow.focus(); } catch (x) {}
+    if (press) {
+      try { f.contentWindow.postMessage({ niksnaks: 'center' }, '*'); } catch (x) {}
+    }
+    toast(press ? 'Player: OK play/pause, \u25C0 \u25B6 skip 10s, BACK leave'
+                : 'Press OK to play. BACK leaves the player');
+  }
+
+  // Site rule "then": after clicking X, move to Y (e.g. play button -> player)
+  function afterActivate(t) {
+    var then = RULE.then;
+    if (!then || !IS_TOP || !t.matches) return;
+    for (var sel in then) {
+      if (!then.hasOwnProperty(sel) || !t.matches(sel)) continue;
+      var targetSel = then[sel];
+      setTimeout(function () {
+        var f = document.querySelector(targetSel);
+        if (!f) return;
+        var r = f.getBoundingClientRect();
+        if (r.width < 50 || r.height < 50) return;
+        focusEl(f);
+        if (f.tagName === 'IFRAME') enterFrame(f, false);
+      }, 1600);
+      return;
+    }
+  }
+
+  function largestVideo() {
+    var vids = document.getElementsByTagName('video');
+    var best = null;
+    var bestArea = 0;
+    for (var i = 0; i < vids.length; i++) {
+      var r = vids[i].getBoundingClientRect();
+      if (r.width * r.height > bestArea) { bestArea = r.width * r.height; best = vids[i]; }
+    }
+    return best;
+  }
+
+  // Press whatever sits in the middle of the screen: in a player that is the
+  // play button. Nested player iframes get the press passed on.
+  function clickCenter() {
+    var cx = window.innerWidth / 2;
+    var cy = window.innerHeight / 2;
+    var t = document.elementFromPoint(cx, cy);
+    if (!t) return;
+    if (t.tagName === 'IFRAME') { enterFrame(t, true); return; }
+    var v = largestVideo();
+    var wasPaused = v ? v.paused : false;
+    var opts = { bubbles: true, cancelable: true, view: window, clientX: cx, clientY: cy, button: 0 };
+    navClick = true;
+    try {
+      ['pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click'].forEach(function (type) {
+        try { t.dispatchEvent(new MouseEvent(type, opts)); } catch (x) {}
+      });
+    } finally { navClick = false; }
+    // Some players ignore synthetic clicks: start the video directly
+    if (v && wasPaused) {
+      setTimeout(function () {
+        if (!v.paused) return;
+        try { var p = v.play(); if (p && p.catch) p.catch(function () {}); } catch (x) {}
+      }, 700);
+    }
   }
 
   function findVideo() {
@@ -1114,7 +1230,10 @@
     // Video player
     var video = findVideo();
     var fs = fullscreenEl();
-    if (fs || (video && focused === video)) {
+    // Inside a player iframe with nothing selected: the remote controls the video
+    var frameVideo = (!IS_TOP && !fs && !(focused && document.contains(focused))) ? largestVideo() : null;
+    if (frameVideo) video = frameVideo;
+    if (fs || (video && (focused === video || video === frameVideo))) {
       if (k === KEY.BACK || (k === KEY.ESC && fs)) {
         stop(e);
         if (fs) exitFullscreen(); else goBack();
@@ -1127,7 +1246,9 @@
       }
       if (video && k === KEY.ENTER) {
         stop(e);
-        if (video.paused) video.play(); else video.pause();
+        if (video === frameVideo && video.paused && !video.currentTime) clickCenter();  // first start: use the player's own button
+        else if (video.paused) video.play();
+        else video.pause();
         return;
       }
       if (fs) return;  // let the site's player handle everything else
@@ -1144,6 +1265,9 @@
       if (target) {
         stop(e);
         activate(target);
+      } else if (!IS_TOP) {
+        stop(e);
+        clickCenter();
       }
       return;
     }
@@ -1276,20 +1400,34 @@
       if (typeof cmd !== 'string' || e.source === window) return;
       // Keys only reach the frame that has focus, so ignore messages from any other frame
       var act = document.activeElement;
-      if (!act || act.tagName !== 'IFRAME' || act.contentWindow !== e.source) return;
-      if (cmd !== 'leave') runShortcut(cmd);
-      else {
-        // Find the iframe that sent it and put the focus ring back on it
-        var frames = document.querySelectorAll('iframe');
-        for (var i = 0; i < frames.length; i++) {
-          if (frames[i].contentWindow === e.source) {
-            window.focus();
-            frames[i].blur();
-            focusEl(frames[i]);
-            return;
-          }
-        }
-        window.focus();
+      if (!act || act.tagName !== 'IFRAME' || !isWithin(e.source, act.contentWindow)) return;
+      if (cmd !== 'leave') { runShortcut(cmd); return; }
+      // BACK in the player: put the ring back on the player on the page
+      window.focus();
+      try { act.blur(); } catch (x) {}
+      focusEl(act);
+    });
+  }
+
+  // Is window w this frame window, or a frame nested inside it?
+  function isWithin(w, frameWin) {
+    for (var i = 0; w && i < 10; i++) {
+      if (w === frameWin) return true;
+      if (w === window) return false;
+      try { w = w.parent; } catch (x) { return false; }
+    }
+    return false;
+  }
+
+  // In a frame: the page above asks us to press the player's play button
+  if (!IS_TOP) {
+    window.addEventListener('message', function (e) {
+      if (e.source !== window.parent || !e.data || e.data.niksnaks !== 'center') return;
+      var v = largestVideo();
+      if (v && v.currentTime > 0) {
+        if (v.paused) { try { v.play(); } catch (x) {} } else v.pause();
+      } else {
+        clickCenter();
       }
     });
   }
@@ -1311,5 +1449,18 @@
     if (document.querySelector('meta[name="niksnaks-home"]')) return;
     buildBar();
     if (IS_TOP) initDark();  // frames are handled by the page's own dark mode
+    if (IS_TOP && RULE.focus) {
+      setTimeout(siteAutoFocus, 800);
+      setTimeout(siteAutoFocus, 2500);  // pages that render late
+    }
   });
+
+  function siteAutoFocus() {
+    if (focused) return;  // you already moved
+    var f = document.querySelector(RULE.focus);
+    if (!f) return;
+    var r = f.getBoundingClientRect();
+    if (r.width < 6 || r.height < 6 || !inView(r)) return;
+    focusEl(f);
+  }
 })();
