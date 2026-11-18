@@ -52,6 +52,31 @@ body {
   pointer-events: none;
 }
 
+/* ---------- Mouse cursor (drawn by app.js) ---------- */
+#cursor {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 36px;
+  height: 36px;
+  z-index: 1000;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+#cursor svg {
+  display: block;
+  width: 36px;
+  height: 36px;
+  fill: #F3F5EE;
+  stroke: #1C1D20;
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  -webkit-filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.6));
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.6));
+}
+html.has-cursor, html.has-cursor * { cursor: none !important; }
+
 /* ---------- Clock ---------- */
 .clock {
   position: absolute;

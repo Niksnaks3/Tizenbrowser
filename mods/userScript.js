@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Niksnaks-browser
 // @namespace    niksnaks
-// @version      0.1.2
+// @version      0.1.3
 // @description  Ad blocking, TV remote navigation and dark mode. Injected by TizenBrew on every page.
 // @match        *://*/*
 // @run-at       document-start
@@ -572,6 +572,14 @@
     '#nk-bar .nk-count { display: flex !important; align-items: center !important; padding: 0 12px 0 16px !important;',
     '  color: #A9ADB3 !important; font-size: 20px !important; font-weight: 700 !important; white-space: nowrap !important; }',
     '#nk-bar .nk-count svg { width: 22px !important; height: 22px !important; margin-right: 8px !important; }',
+
+    // Mouse cursor (TizenBrew doesn't let the TV draw its own pointer)
+    '#nk-cursor { all: initial; position: fixed !important; left: 0 !important; top: 0 !important;',
+    '  width: 36px !important; height: 36px !important; z-index: 2147483647 !important;',
+    '  pointer-events: none !important; opacity: 0; transition: opacity .3s !important; }',
+    '#nk-cursor svg { display: block !important; width: 36px !important; height: 36px !important;',
+    '  filter: drop-shadow(0 2px 3px rgba(0,0,0,.6)) !important; }',
+    'html.nk-cursor, html.nk-cursor * { cursor: none !important; }',
 
     // Toast
     '#nk-toast { position: fixed !important; z-index: 2147483647 !important; left: 50% !important;',
@@ -1168,7 +1176,12 @@
   window.addEventListener('mouseover', function (e) { hoverEl = navTarget(e.target); }, true);
   window.addEventListener('mousemove', function (e) {
     lastMouse = Date.now();
-    if (e.clientY <= 6) peekBar(2500);
+    if (IS_TOP) {
+      drawCursor(e.clientX, e.clientY);
+      if (e.clientY <= 6) peekBar(2500);
+    } else {
+      try { window.parent.postMessage({ niksnaksCursor: [e.clientX, e.clientY] }, '*'); } catch (x) {}
+    }
   }, true);
   window.addEventListener('mousedown', function (e) {
     lastMouse = Date.now();
@@ -1187,6 +1200,67 @@
     focused = t;
     placeRing();
   }, true);
+
+  /* =====================================================================
+   * 12b. MOUSE CURSOR — drawn by us, because the TV doesn't show its pointer
+   *      inside TizenBrew. Hides itself after 4 seconds without movement.
+   * ===================================================================== */
+
+  var cursorEl = null;
+  var cursorTimer = null;
+  var cursorFrame = 0;
+  var cursorX = 0;
+  var cursorY = 0;
+
+  function drawCursor(x, y) {
+    cursorX = x;
+    cursorY = y;
+    if (!document.documentElement) return;
+    if (!cursorEl) {
+      cursorEl = el('div', { id: 'nk-cursor', 'data-niksnaks': '' });
+      var svg = document.createElementNS(NS, 'svg');
+      svg.setAttribute('viewBox', '0 0 24 24');
+      var p = document.createElementNS(NS, 'path');
+      p.setAttribute('d', 'M4 2.5v17.2l4.6-4.4 3 6.9 3.1-1.3-3-6.8h6.4z');
+      p.setAttribute('fill', '#F3F5EE');
+      p.setAttribute('stroke', '#1C1D20');
+      p.setAttribute('stroke-width', '1.5');
+      p.setAttribute('stroke-linejoin', 'round');
+      svg.appendChild(p);
+      cursorEl.appendChild(svg);
+      document.documentElement.appendChild(cursorEl);
+    }
+    if (!cursorFrame) {
+      cursorFrame = requestAnimationFrame(function () {
+        cursorFrame = 0;
+        // The arrow's tip sits at (6, 4) inside the 36px box
+        cursorEl.style.setProperty('transform', 'translate(' + (cursorX - 6) + 'px,' + (cursorY - 4) + 'px)', 'important');
+      });
+    }
+    var root = document.documentElement;
+    if (root.className.indexOf('nk-cursor') === -1) root.className += ' nk-cursor';
+    cursorEl.style.setProperty('opacity', '1', 'important');
+    clearTimeout(cursorTimer);
+    cursorTimer = setTimeout(function () { cursorEl.style.setProperty('opacity', '0', 'important'); }, 4000);
+  }
+
+  // Mouse moves inside a player iframe: the frame tells its parent, which adds
+  // the iframe's position and draws the cursor (or passes it further up).
+  window.addEventListener('message', function (e) {
+    var pos = e.data && e.data.niksnaksCursor;
+    if (!pos || pos.length !== 2 || e.source === window) return;
+    var frames = document.querySelectorAll('iframe');
+    for (var i = 0; i < frames.length; i++) {
+      if (frames[i].contentWindow === e.source) {
+        var r = frames[i].getBoundingClientRect();
+        var x = r.left + (+pos[0] || 0);
+        var y = r.top + (+pos[1] || 0);
+        if (IS_TOP) drawCursor(x, y);
+        else { try { window.parent.postMessage({ niksnaksCursor: [x, y] }, '*'); } catch (x2) {} }
+        return;
+      }
+    }
+  });
 
   /* =====================================================================
    * 13. FRAMES — keys pressed inside a player iframe are passed to the top

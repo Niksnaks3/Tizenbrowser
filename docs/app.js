@@ -181,6 +181,33 @@
     }
   });
 
+  /* ---------- Mouse cursor ----------
+     The TV doesn't draw its pointer inside TizenBrew, so we draw our own. */
+  var cursor = document.createElement('div');
+  cursor.id = 'cursor';
+  cursor.innerHTML = '<svg viewBox="0 0 24 24"><path d="M4 2.5v17.2l4.6-4.4 3 6.9 3.1-1.3-3-6.8h6.4z"/></svg>';
+  document.body.appendChild(cursor);
+  var cursorTimer = null;
+  var cursorFrame = 0;
+  var cx = 0;
+  var cy = 0;
+  document.addEventListener('mousemove', function (e) {
+    cx = e.clientX;
+    cy = e.clientY;
+    if (!cursorFrame) {
+      cursorFrame = requestAnimationFrame(function () {
+        cursorFrame = 0;
+        var t = 'translate(' + (cx - 6) + 'px,' + (cy - 4) + 'px)';
+        cursor.style.webkitTransform = t;
+        cursor.style.transform = t;
+      });
+    }
+    if (document.documentElement.className.indexOf('has-cursor') === -1) document.documentElement.className += ' has-cursor';
+    cursor.style.opacity = '1';
+    clearTimeout(cursorTimer);
+    cursorTimer = setTimeout(function () { cursor.style.opacity = '0'; }, 4000);
+  });
+
   /* ---------- Clock ---------- */
   function pad(n) { return n < 10 ? '0' + n : '' + n; }
   function tick() {
