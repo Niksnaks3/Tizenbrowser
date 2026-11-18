@@ -6,7 +6,7 @@ a mini toolbar and automatic dark mode.
 
 ```
 Tizenbrowser/
-├── package.json         TizenBrew module info (published to npm)
+├── package.json         TizenBrew module info
 ├── docs/                the homepage (GitHub Pages serves this folder)
 │   ├── index.html
 │   ├── style.css
@@ -36,18 +36,15 @@ Green is left alone: TizenBrew uses it for the module manager.
    changes, update it in *both* `package.json` (`websiteURL`) and `mods/userScript.js` (`HOME_URL`).
 2. **Put the homepage online.** In the GitHub repo go to *Settings → Pages → Build and
    deployment → Deploy from a branch → `main` / `/docs`*. After a minute it's live.
-3. **Publish the module.** Install Node.js LTS from nodejs.org, then in this folder:
-   ```
-   npm login
-   npm publish
-   ```
-   (`niksnaks-browser` was still free on npm on 18 Nov 2026.)
-4. **Install on the TV.** Open TizenBrew, press **Green** for the module manager, add the
-   package `niksnaks-browser`, and start it.
+3. **Install on the TV.** Open TizenBrew, press **Green** for the module manager, choose to add
+   a **GitHub** module, type `Niksnaks3/Tizenbrowser`, then start Niksnaks-browser.
+   No npm needed: TizenBrew loads GitHub modules through jsDelivr
+   (`https://cdn.jsdelivr.net/gh/Niksnaks3/Tizenbrowser/...`).
 
 ## 2. The key test (do this first)
 
-Everything depends on the script being injected on *other* sites too, not just the homepage.
+Because `evaluateScriptOnDocumentStart` is set, TizenBrew injects the script into every page
+you open (it uses `Page.addScriptToEvaluateOnNewDocument`), so this should pass. Check it anyway:
 
 1. Start Niksnaks-browser on the TV.
 2. Open any tile.
@@ -61,7 +58,14 @@ Everything depends on the script being injected on *other* sites too, not just t
 
 - **Homepage only** (`docs/`): commit and push. GitHub Pages updates in a minute or so.
 - **Script** (`mods/`): bump `version` in `package.json` (and `@version` at the top of the
-  script), then `npm publish`. Restart the module on the TV.
+  script), commit and push. jsDelivr caches GitHub files for up to 12 hours; to get the new
+  version right away, open these two links in a browser after pushing:
+  - https://purge.jsdelivr.net/gh/Niksnaks3/Tizenbrowser/package.json
+  - https://purge.jsdelivr.net/gh/Niksnaks3/Tizenbrowser/mods/userScript.js
+
+  Then fully close and reopen TizenBrew on the TV (it also keeps the script in memory).
+- Don't create GitHub releases or tags: jsDelivr would then serve the newest tag instead of
+  `main`.
 
 ## 4. Testing on a PC
 
