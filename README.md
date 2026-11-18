@@ -51,8 +51,8 @@ Green is left alone: TizenBrew uses it for the module manager.
 2. **Put the homepage online.** In the GitHub repo go to *Settings → Pages → Build and
    deployment → Deploy from a branch → `main` / `/docs`*. After a minute it's live.
 3. **Install on the TV.** Open TizenBrew, press **Green** for the module manager, choose to add
-   a **GitHub** module and type the pinned name `Niksnaks3/Tizenbrowser@<commit>` (the commit
-   that introduced the loader; see "How updates work" below). Then start Niksnaks-browser.
+   a **GitHub** module and type the pinned name `Niksnaks3/Tizenbrowser@2f0b6b5` (see "How
+   updates work" below). Then start Niksnaks-browser.
 
 ### How updates work
 
